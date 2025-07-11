@@ -1,0 +1,107 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Audio Reader</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <center>
+    <h1>PDF Audio Reader</h1>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <input type="file" name="pdf" accept=".pdf" required>
+        <button type="submit">Upload PDF</button>
+        
+    <div id="controls" style="display:none;">
+        <label for="speed">Speed (words/sec):</label>
+        <input type="number" id="speed" value="1" min="0.1" step="0.1">
+        <label for="voice">Select Voice:</label>
+        <select id="voiceSelect"></select>
+        <button onclick="playText()">▶️ Play</button>
+        <button onclick="pauseText()">⏸️ Pause</button>
+        <button onclick="resumeText()">▶️ Resume</button>
+        <p id="currentWord"></p>
+        
+    </div>
+</center>
+    <script>
+    let words = [];
+    let currentIndex = 0;
+    let rate = 1;
+    let paused = false;
+    let voices = [];
+
+    function populateVoices() {
+        voices = speechSynthesis.getVoices();
+        const voiceSelect = document.getElementById("voiceSelect");
+        voiceSelect.innerHTML = "";
+
+        voices.forEach((voice, index) => {
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = `${voice.name} (${voice.lang})`;
+            voiceSelect.appendChild(option);
+        });
+
+        const hindiVoiceIndex = voices.findIndex(v => v.lang.includes("hi") || v.name.toLowerCase().includes("hindi"));
+        if (hindiVoiceIndex !== -1) {
+            voiceSelect.value = hindiVoiceIndex;
+        }
+    }
+
+    speechSynthesis.onvoiceschanged = populateVoices;
+    window.onload = populateVoices;
+
+    function speakNextWord() {
+        if (paused || currentIndex >= words.length) return;
+
+        const word = words[currentIndex++];
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.rate = rate;
+
+        const selectedVoiceIndex = document.getElementById("voiceSelect").value;
+        utterance.voice = voices[selectedVoiceIndex];
+
+        utterance.onend = () => {
+            if (!paused) speakNextWord();
+        };
+
+        document.getElementById("currentWord").textContent = word;
+        speechSynthesis.speak(utterance);
+    }
+
+    function playText() {
+        paused = false;
+        rate = parseFloat(document.getElementById("speed").value) || 1;
+        if (currentIndex >= words.length) currentIndex = 0;
+        speakNextWord();
+    }
+
+    function pauseText() {
+        paused = true;
+        speechSynthesis.cancel();
+    }
+
+    function resumeText() {
+        if (paused) {
+            paused = false;
+            speakNextWord();
+        }
+    }
+
+    document.getElementById('uploadForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const res = await fetch("/", { method: "POST", body: formData });
+        const data = await res.json();
+        words = data.words;
+        currentIndex = 0;
+        paused = false;
+        document.getElementById("controls").style.display = "block";
+        document.getElementById("currentWord").textContent = '';
+    };
+</script>
+
+</body>
+</html>
