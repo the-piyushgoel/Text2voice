@@ -3,12 +3,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PDF Audio Reader</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Text2voice: A PDF Audio Reader</title>
+    <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
+
+    <header>
+        <h1>Text2Voice</h1> 
+    </header>
+    
+
     <center>
-    <h1>PDF Audio Reader</h1>
+    <h3>PDF Audio Reader</h3>
     <form id="uploadForm" method="POST" enctype="multipart/form-data">
         <input type="file" name="pdf" accept=".pdf" required>
         <button type="submit">Upload PDF</button>
@@ -25,6 +31,11 @@
         
     </div>
 </center>
+    <footer>
+
+        © 2025 Text2Voice: Made with ❤️ by Piyush Goel.
+
+    </footer>
     <script>
     let words = [];
     let currentIndex = 0;
